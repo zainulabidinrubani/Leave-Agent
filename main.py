@@ -91,3 +91,15 @@ def leave_action(request_id: int, action: str):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/debug-email")
+def debug_email():
+    import smtplib
+    addr = os.getenv("GMAIL_USER")
+    pwd = os.getenv("GMAIL_PASS")
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
+            smtp.login(addr, pwd)
+        return {"status": "connected and logged in successfully"}
+    except Exception as e:
+        return {"status": "failed", "error": str(e), "type": type(e).__name__}
