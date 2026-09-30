@@ -30,7 +30,7 @@ model = init_chat_model(
     "openai/gpt-oss-120b",
     model_provider="groq",
     max_tokens=300,
-    temperature=0.3,
+    temperature=0.5,
 )
 
 checkpointer = InMemorySaver()
