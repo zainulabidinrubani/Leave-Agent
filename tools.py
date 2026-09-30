@@ -28,8 +28,7 @@ def get_emp_info(query: str):
 @tool
 def get_leave_balance(query: int):
     "when user give you annual_leave balance then comprare the and tell is he is eliglbe for leave or not"
-    res = supabase.table("leave_types").select("total_allowed_days").execute()
-    if query < res.data[0]["total_allowed_days"]:
+    if query > 0:
         return "You are eligible for leave"
     else:
         return "You are not eligible for leave"
