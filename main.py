@@ -27,7 +27,7 @@ app.add_middleware(
 )
 
 model = init_chat_model(
-    model="mistral-large-latest",      
+    model="open-mixtral-8x7b",      
     model_provider="mistralai",
     max_tokens=300,
     temperature=0.1,
