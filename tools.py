@@ -89,14 +89,14 @@ def inform_manger(request_id: int, query: str) -> str:
     "Use this for sending emial and informing the manager, with approve/reject links for the given request_id"
     approve_link = f"{PUBLIC_BASE_URL}/leave/action?request_id={request_id}&action=approve"
     reject_link = f"{PUBLIC_BASE_URL}/leave/action?request_id={request_id}&action=reject"
-
+ 
     try:
         res = requests.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}"},
             json={
                 "from": "Leave Desk <onboarding@resend.dev>",
-                "to": ["saluman582@gmail.com"],
+                "to": [os.getenv("MANAGER_EMAIL", "fiverrzain03@gmail.com")],
                 "subject": "New Leave request",
                 "text": f"{query}\n\nApprove: {approve_link}\nReject: {reject_link}",
             },
