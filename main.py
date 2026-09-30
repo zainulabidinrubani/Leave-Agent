@@ -27,10 +27,9 @@ app.add_middleware(
 )
 
 model = init_chat_model(
-    "qwen/qwen3.8-27b",
-    model_provider="groq",
+    model="open-mistral-7b",      
+    model_provider="mistralai",
     max_tokens=300,
-    reasoning_effort=None,
     temperature=0.3,
 )
 
