@@ -27,10 +27,10 @@ app.add_middleware(
 )
 
 model = init_chat_model(
-    model="open-mistral-7b",      
+    model="mistral-large-latest",      
     model_provider="mistralai",
     max_tokens=300,
-    temperature=0.3,
+    temperature=0.1,
 )
 
 checkpointer = InMemorySaver()
