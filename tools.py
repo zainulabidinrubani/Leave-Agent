@@ -99,7 +99,8 @@ def inform_manger(request_id: int, query: str) -> str:
     msg["Subject"] = "New Leave request"
     msg.set_content(f"{query}\n\nApprove: {approve_link}\nReject: {reject_link}")
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
+    with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as smtp:
+        smtp.starttls()
         smtp.login(addr, pwd)
         smtp.send_message(msg)
     return "Email sent to manager"
