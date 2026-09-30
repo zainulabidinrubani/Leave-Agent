@@ -87,9 +87,21 @@ def update_leave_balance_after_rejection(employee_id: str, days_deducted: int):
 
 @tool
 def inform_manger(request_id: int, query: str) -> str:
-    "Use this for sending emial and informing the manager, with approve/reject links for the given request_id"
+    "Use this for sending email and informing the manager, with approve/reject links for the given request_id"
     approve_link = f"{PUBLIC_BASE_URL}/leave/action?request_id={request_id}&action=approve"
     reject_link = f"{PUBLIC_BASE_URL}/leave/action?request_id={request_id}&action=reject"
+
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2>Leave Request #{request_id}</h2>
+        <p>{query}</p>
+        <div style="margin-top: 20px;">
+            <a href="{approve_link}" style="background-color: #16a34a; color: white; padding: 10px 18px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 12px; display: inline-block;">Approve Leave</a>
+            <a href="{reject_link}" style="background-color: #dc2626; color: white; padding: 10px 18px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Reject Leave</a>
+        </div>
+        <p style="margin-top: 25px; font-size: 12px; color: #777;">If the buttons do not work, copy and paste this URL:<br>{approve_link}</p>
+    </div>
+    """
 
     try:
         res = requests.post(
@@ -97,18 +109,17 @@ def inform_manger(request_id: int, query: str) -> str:
             headers={"Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}"},
             json={
                 "from": "Leave Desk <onboarding@resend.dev>",
-                "to": ["saluman582@gmail.com"],
-                "subject": "New Leave request",
-                "text": f"{query}\n\nApprove: {approve_link}\nReject: {reject_link}",
+                "to": [os.getenv("MANAGER_EMAIL", "fiverrzain03@gmail.com")],
+                "subject": f"Leave Request #{request_id} Pending Approval",
+                "html": html_content,
             },
             timeout=10,
         )
         if res.status_code >= 400:
             return f"Failed to send email: {res.text}"
-        return "Email sent to manager"
+        return "Email sent to manager with approval buttons"
     except Exception as e:
         return f"Failed to send email: {e}"
-
 
 ALL_TOOLS = [
     get_emp_info,
