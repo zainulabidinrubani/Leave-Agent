@@ -96,7 +96,7 @@ def inform_manger(request_id: int, query: str) -> str:
             headers={"Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}"},
             json={
                 "from": "Leave Desk <onboarding@resend.dev>",
-                "to": ["fiverrzain03@gmail.com"],
+                "to": ["saluman582@gmail.com"],
                 "subject": "New Leave request",
                 "text": f"{query}\n\nApprove: {approve_link}\nReject: {reject_link}",
             },
