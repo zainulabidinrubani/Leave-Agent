@@ -6,6 +6,7 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 from supabase import create_client
 from langchain.tools import tool
+import requests
 
 load_dotenv(override=True)
 
@@ -86,23 +87,26 @@ def update_leave_balance_after_rejection(employee_id: str, days_deducted: int):
 @tool
 def inform_manger(request_id: int, query: str) -> str:
     "Use this for sending emial and informing the manager, with approve/reject links for the given request_id"
-    addr = os.getenv("GMAIL_USER")
-    pwd = os.getenv("GMAIL_PASS")
-
     approve_link = f"{PUBLIC_BASE_URL}/leave/action?request_id={request_id}&action=approve"
     reject_link = f"{PUBLIC_BASE_URL}/leave/action?request_id={request_id}&action=reject"
 
-    msg = EmailMessage()
-    msg["From"] = addr
-    msg["To"] = "fiverrzain03@gmail.com"
-    msg["Subject"] = "New Leave request"
-    msg.set_content(f"{query}\n\nApprove: {approve_link}\nReject: {reject_link}")
-
-    with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as smtp:
-        smtp.starttls()
-        smtp.login(addr, pwd)
-        smtp.send_message(msg)
-    return "Email sent to manager"
+    try:
+        res = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}"},
+            json={
+                "from": "Leave Desk <onboarding@resend.dev>",
+                "to": ["fiverrzain03@gmail.com"],
+                "subject": "New Leave request",
+                "text": f"{query}\n\nApprove: {approve_link}\nReject: {reject_link}",
+            },
+            timeout=10,
+        )
+        if res.status_code >= 400:
+            return f"Failed to send email: {res.text}"
+        return "Email sent to manager"
+    except Exception as e:
+        return f"Failed to send email: {e}"
 
 
 ALL_TOOLS = [
