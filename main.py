@@ -6,6 +6,7 @@ load_dotenv(override=True)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from langchain.chat_models import init_chat_model
@@ -27,10 +28,11 @@ app.add_middleware(
 )
 
 model = init_chat_model(
-    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
     model_provider="groq",
     max_tokens=300,
-    temperature=0.5,
+    reasoning_effort=None,
+    temperature=0.3,
 )
 
 checkpointer = InMemorySaver()
@@ -87,18 +89,26 @@ def leave_action(request_id: int, action: str):
     return {"message": f"Leave request {request_id} rejected. No leave days were deducted."}
 
 
+@app.get("/")
+def root():
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/debug-groq-key")
+def debug_groq_key():
+    key = os.getenv("GROQ_API_KEY")
+    if not key:
+        return {"status": "missing", "message": "GROQ_API_KEY is not set at all."}
+    return {
+        "status": "present",
+        "length": len(key),
+        "starts_with": key[:6],
+        "ends_with": key[-4:],
+        "has_leading_or_trailing_whitespace": key != key.strip(),
+        "contains_newline": "\n" in key or "\r" in key,
+    }
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-@app.get("/debug-email")
-def debug_email():
-    import smtplib
-    addr = os.getenv("GMAIL_USER")
-    pwd = os.getenv("GMAIL_PASS")
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as smtp:
-            smtp.login(addr, pwd)
-        return {"status": "connected and logged in successfully"}
-    except Exception as e:
-        return {"status": "failed", "error": str(e), "type": type(e).__name__}
