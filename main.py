@@ -62,6 +62,10 @@ def chat(payload: ChatRequest):
     return ChatResponse(reply=reply, session_id=session_id)
 
 
+# 1. Update your imports at the top of main.py to include notify_employee
+from tools import ALL_TOOLS, supabase, update_leave_balance, notify_employee
+
+# 2. Replace your existing route with this updated one
 @app.get("/leave/action")
 def leave_action(request_id: int, action: str):
     if action not in ("approve", "reject"):
@@ -75,6 +79,15 @@ def leave_action(request_id: int, action: str):
 
     if record["status"] != "pending":
         return {"message": f"This request was already {record['status']}."}
+        
+    # --- NEW LOGIC: Fetch employee details to get their email ---
+    emp_req = supabase.table("employees").select("first_name, email").eq("employee_id", record["employee_id"]).execute()
+    employee_name = "Employee"
+    employee_email = "saluman582@gmail.com" # We need a valid email to send this!
+    
+    if emp_req.data:
+        employee_name = emp_req.data[0].get("first_name", "Employee")
+        employee_email = emp_req.data[0].get("email", "")
 
     if action == "approve":
         new_balance = update_leave_balance.invoke({
@@ -82,11 +95,21 @@ def leave_action(request_id: int, action: str):
             "days_deducted": record["total_days"],
         })
         supabase.table("leave_requests").update({"status": "approved"}).eq("request_id", request_id).execute()
-        return {"message": f"Leave request {request_id} approved. New balance: {new_balance} days."}
+        
+        # Send approval email
+        if employee_email:
+            notify_employee(employee_email, employee_name, "approve", request_id)
+            
+        return {"message": f"Leave request {request_id} approved. Employee notified. New balance: {new_balance} days."}
 
-    # action == "reject": no balance change, since nothing was deducted at submission
+    # action == "reject": no balance change
     supabase.table("leave_requests").update({"status": "rejected"}).eq("request_id", request_id).execute()
-    return {"message": f"Leave request {request_id} rejected. No leave days were deducted."}
+    
+    # Send rejection email
+    if employee_email:
+        notify_employee(employee_email, employee_name, "reject", request_id)
+        
+    return {"message": f"Leave request {request_id} rejected. Employee notified."}
 
 
 @app.get("/")

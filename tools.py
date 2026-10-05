@@ -112,6 +112,33 @@ def inform_manger(request_id: int, query: str) -> str:
     except Exception as e:
         return f"Failed to send email: {e}"
 
+def notify_employee(employee_email: str, employee_name: str, action: str, request_id: int):
+    """Standard Python function (not an @tool) to email the employee their result."""
+    
+    if action == "approve":
+        subject = f"Leave Request #{request_id} Approved!"
+        body = f"Hi {employee_name},\n\nGood news! Your leave request (#{request_id}) has been approved by your manager. Have a great time off!\n\n- Leave Desk"
+    else:
+        subject = f"Leave Request #{request_id} Rejected"
+        body = f"Hi {employee_name},\n\nWe are writing to inform you that your leave request (#{request_id}) has been rejected by your manager. Please speak with them directly for more details.\n\n- Leave Desk"
+
+    try:
+        res = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}"},
+            json={
+                "from": "Leave Desk <onboarding@resend.dev>",
+                "to": [employee_email], # Sends directly to the employee
+                "subject": subject,
+                "text": body,
+            },
+            timeout=10,
+        )
+        if res.status_code >= 400:
+            print(f"Failed to email employee: {res.text}")
+    except Exception as e:
+        print(f"Failed to email employee: {e}")
+
 ALL_TOOLS = [
     get_emp_info,
     get_leave_balance,
@@ -121,4 +148,5 @@ ALL_TOOLS = [
     update_leave_balance,
     inform_manger,
     update_leave_balance_after_rejection,
+    notify_employee,  # Added notify_employee to the list of tools
 ]
